@@ -10,9 +10,8 @@ export interface MembershipCriteria {
 export function membershipChecker(criteria: MembershipCriteria) {
     return function(req: RequestWithPrincipal, res: Response, next: NextFunction) {
         const tenantIdString = req.params['tenantId'];
-        if (tenantIdString && !Number.isInteger(Number(tenantIdString))) {
+        if (!tenantIdString || !Number.isInteger(Number(tenantIdString))) {
             res.status(400).json({error: 'Invalid tenantId'});
-            return;
         }
         const tenantId = Number(tenantIdString);
         if (req.principal?.kind === 'user') {

@@ -17,6 +17,7 @@
   "author": "Chris Carrington <chris@megafarad.com> (https://megafarad.com)",
   "keywords": [],
   "license": "MIT",
+  "private": false,
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",

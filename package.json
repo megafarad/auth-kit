@@ -1,6 +1,7 @@
 {
   "name": "@sirhc77/auth-kit",
   "version": "0.1.0",
+  "description": "Utilities for securing a Node Express app.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -13,13 +14,9 @@
   "scripts": {
     "build": "tsc"
   },
-  "publishConfig": {
-    "access": "restricted"
-  },
+  "author": "Chris Carrington <chris@megafarad.com> (https://megafarad.com)",
   "keywords": [],
-  "author": "",
-  "license": "UNLICENSED",
-  "description": "The common authorization library",
+  "license": "MIT",
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",

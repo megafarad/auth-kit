@@ -23,6 +23,18 @@ export function demoAuth(req: RequestWithPrincipal, res: Response, next: NextFun
                 }
             ]
         }
+    } else if (req.credentials?.type === 'apiKey' && req.credentials.apiKey === process.env.DEMO_API_KEY) {
+        req.principal = {
+            kind: 'service',
+            name: 'demoKey',
+            superKey: false,
+            memberships: [
+                {
+                    tenantId: 1,
+                    scopes: ['appointments:getAvailable', 'appointments:make']
+                }
+            ]
+        }
     } else {
         req.principal = {
             kind: 'public'

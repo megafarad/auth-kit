@@ -1,6 +1,6 @@
 {
   "name": "@sirhc77/auth-kit",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Utilities for securing a Node Express app.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest"
   },
   "author": "Chris Carrington <chris@megafarad.com> (https://megafarad.com)",
   "keywords": [],

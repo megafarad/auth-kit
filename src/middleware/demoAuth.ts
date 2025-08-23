@@ -10,6 +10,9 @@ export interface RequestWithPrincipal extends RequestWithCredentials {
 }
 
 export function demoAuth(req: RequestWithPrincipal, res: Response, next: NextFunction) {
+    if (!process.env.DEMO_BEARER_TOKEN || !process.env.DEMO_API_KEY) {
+        res.status(500).json({error: 'Missing environment variables'});
+    }
     if (req.credentials?.type === 'bearerToken' && req.credentials.token === process.env.DEMO_BEARER_TOKEN) {
         req.principal = {
             kind: 'user',

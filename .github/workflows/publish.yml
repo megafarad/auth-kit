@@ -28,6 +28,9 @@ jobs:
           DEMO_API_KEY: ${{ secrets.DEMO_API_KEY }}
           DEMO_BEARER_TOKEN: ${{ secrets.DEMO_BEARER_TOKEN }}
 
+      - name: Build
+        run: npm run build
+
       - name: Publish to NPM
         uses: JS-DevTools/npm-publish@v3
         with:

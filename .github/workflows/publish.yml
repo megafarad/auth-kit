@@ -16,6 +16,9 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Generate package-lock.json
+        run: npm i
+
       - name: Install Dependencies
         run: npm ci
 

@@ -1,6 +1,6 @@
 {
   "name": "@sirhc77/auth-kit",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Utilities for securing a Node Express app.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

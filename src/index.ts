@@ -5,3 +5,6 @@ export * from './crypto/hashSecret';
 export * from './crypto/generateApiKey';
 export * from './jwt/verifyUserJwt';
 export * from './core/auth';
+export * from './hmac/nonceStore';
+export * from './hmac/demoNonceStore';
+export * from './hmac/signRequest';

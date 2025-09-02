@@ -1,6 +1,6 @@
 {
   "name": "@sirhc77/auth-kit",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Utilities for securing a Node Express app.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,6 +36,7 @@
     "argon2": "^0.44.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "jose": "^4.15.9"
+    "jose": "^4.15.9",
+    "uuid": "^11.1.0"
   }
 }

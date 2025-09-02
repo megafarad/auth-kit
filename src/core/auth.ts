@@ -82,6 +82,7 @@ export type UserPrincipal = {
 
 export type ServicePrincipal = {
     kind: 'service';
+    id: string;
     name: string;
     superKey: boolean;
     memberships: ServiceMembership[];

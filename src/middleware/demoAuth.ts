@@ -4,6 +4,7 @@ import {RequestWithCredentials} from './extractCredentials';
 import {Principal} from "../core/auth";
 import crypto from 'crypto';
 import {NonceStore} from "../hmac/nonceStore";
+import {v5 as uuidv5} from 'uuid';
 
 dotenv.config();
 
@@ -81,6 +82,7 @@ export function demoAuth(nonceStore: NonceStore) {
 
             req.principal = {
                 kind: 'service',
+                id: uuidv5(process.env.DEMO_HMAC_KEY, uuidv5.URL),
                 name: 'demoHmac',
                 superKey: false,
                 memberships: [
@@ -103,7 +105,7 @@ export function demoAuth(nonceStore: NonceStore) {
             if (req.credentials.token === process.env.DEMO_BEARER_TOKEN) {
                 req.principal = {
                     kind: 'user',
-                    userId: 'demoUser',
+                    userId: uuidv5(process.env.DEMO_BEARER_TOKEN, uuidv5.URL),
                     superUser: false,
                     memberships: [
                         {
@@ -127,6 +129,7 @@ export function demoAuth(nonceStore: NonceStore) {
             if (req.credentials.apiKey === process.env.DEMO_API_KEY) {
                 req.principal = {
                     kind: 'service',
+                    id: uuidv5(process.env.DEMO_API_KEY, uuidv5.URL),
                     name: 'demoKey',
                     superKey: false,
                     memberships: [

@@ -91,6 +91,7 @@ export function demoAuth(nonceStore: NonceStore) {
                 ]
             }
             next();
+            return;
         }
 
         // Bearer token demo auth
@@ -113,6 +114,7 @@ export function demoAuth(nonceStore: NonceStore) {
                     ]
                 }
                 next();
+                return;
             }
         }
 
@@ -135,6 +137,7 @@ export function demoAuth(nonceStore: NonceStore) {
                     ]
                 }
                 next();
+                return;
             }
         }
 
@@ -142,5 +145,6 @@ export function demoAuth(nonceStore: NonceStore) {
             kind: 'public'
         }
         next();
+        return;
     }
 }

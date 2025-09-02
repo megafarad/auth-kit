@@ -27,6 +27,7 @@ jobs:
         env:
           DEMO_API_KEY: ${{ secrets.DEMO_API_KEY }}
           DEMO_BEARER_TOKEN: ${{ secrets.DEMO_BEARER_TOKEN }}
+          DEMO_HMAC_KEY: ${{ secrets.DEMO_HMAC_KEY }}
 
       - name: Build
         run: npm run build

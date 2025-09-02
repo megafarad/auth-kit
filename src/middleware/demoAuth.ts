@@ -12,11 +12,12 @@ export interface RequestWithPrincipal extends RequestWithCredentials {
 }
 
 export function demoAuth(nonceStore: NonceStore) {
-    return async function demoAuth(req: RequestWithPrincipal, res: Response, next: NextFunction) {
+    return async function demoAuth(req: RequestWithPrincipal, res: Response, next: NextFunction): Promise<void> {
         // HMAC demo auth (preshared key in DEMO_HMAC_KEY)
         if (req.credentials?.type === 'hmac') {
             if (!process.env.DEMO_HMAC_KEY) {
-                return res.status(500).json({error: 'Missing DEMO_HMAC_KEY environment variable'});
+                res.status(500).json({error: 'Missing DEMO_HMAC_KEY environment variable'});
+                return;
             }
 
             const { signature, timestamp, algorithm, nonce } = req.credentials;
@@ -25,26 +26,31 @@ export function demoAuth(nonceStore: NonceStore) {
             const allowedSkewMillis = 30000; // 5 minutes for demo
 
             if (!Number.isFinite(tsNum)) {
-                return res.status(401).json({ error: 'Invalid timestamp' });
+                res.status(401).json({ error: 'Invalid timestamp' });
+                return;
             }
             if (Math.abs(nowMillis - tsNum) > allowedSkewMillis) {
-                return res.status(401).json({ error: 'Timestamp outside allowed skew' });
+                res.status(401).json({ error: 'Timestamp outside allowed skew' });
+                return;
             }
             if (!nonce || nonce.length < 8) {
-                return res.status(400).json({ error: 'Missing or invalid nonce' });
+                res.status(400).json({ error: 'Missing or invalid nonce' });
+                return;
             }
 
             const seenAt = await nonceStore.getNonce(nonce);
 
             if (seenAt && Math.abs(nowMillis - seenAt) <= allowedSkewMillis) {
-                return res.status(401).json({ error: 'Nonce already seen' });
+                res.status(401).json({ error: 'Nonce already seen' });
+                return;
             }
 
             await nonceStore.setNonce(nonce, nowMillis);
 
             const algo = (algorithm || 'sha256').toLowerCase();
             if (algo !== 'sha256') {
-                return res.status(400).json({ error: 'Unsupported HMAC algorithm (demo supports sha256 only)' });
+                res.status(400).json({ error: 'Unsupported HMAC algorithm (demo supports sha256 only)' });
+                return;
             }
 
             // Compute body hash (demo: uses JSON.stringify(req.body) if present)
@@ -64,11 +70,13 @@ export function demoAuth(nonceStore: NonceStore) {
                 // Expect Base64 in x-signature for this demo
                 provided = Buffer.from(signature, 'base64');
             } catch {
-                return res.status(400).json({ error: 'Invalid signature encoding (expected Base64)' });
+                res.status(400).json({ error: 'Invalid signature encoding (expected Base64)' });
+                return;
             }
 
             if (provided.length !== expected.length || !crypto.timingSafeEqual(provided, expected)) {
-                return res.status(401).json({ error: 'Invalid HMAC signature' });
+                res.status(401).json({ error: 'Invalid HMAC signature' });
+                return;
             }
 
             req.principal = {
@@ -82,13 +90,14 @@ export function demoAuth(nonceStore: NonceStore) {
                     }
                 ]
             }
-            return next();
+            next();
         }
 
         // Bearer token demo auth
         if (req.credentials?.type === 'bearerToken') {
             if (!process.env.DEMO_BEARER_TOKEN) {
-                return res.status(500).json({error: 'Missing DEMO_BEARER_TOKEN environment variable'});
+                res.status(500).json({error: 'Missing DEMO_BEARER_TOKEN environment variable'});
+                return;
             }
             if (req.credentials.token === process.env.DEMO_BEARER_TOKEN) {
                 req.principal = {
@@ -103,14 +112,15 @@ export function demoAuth(nonceStore: NonceStore) {
                         }
                     ]
                 }
-                return next();
+                next();
             }
         }
 
         // API key demo auth
         if (req.credentials?.type === 'apiKey') {
             if (!process.env.DEMO_API_KEY) {
-                return res.status(500).json({error: 'Missing DEMO_API_KEY environment variable'});
+                res.status(500).json({error: 'Missing DEMO_API_KEY environment variable'});
+                return;
             }
             if (req.credentials.apiKey === process.env.DEMO_API_KEY) {
                 req.principal = {
@@ -124,7 +134,7 @@ export function demoAuth(nonceStore: NonceStore) {
                         }
                     ]
                 }
-                return next();
+                next();
             }
         }
 

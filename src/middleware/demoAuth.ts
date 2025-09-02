@@ -2,6 +2,8 @@ import {Response, NextFunction} from 'express';
 import dotenv from 'dotenv';
 import {RequestWithCredentials} from './extractCredentials';
 import {Principal} from "../core/auth";
+import crypto from 'crypto';
+import {NonceStore} from "../hmac/nonceStore";
 
 dotenv.config();
 
@@ -9,41 +11,123 @@ export interface RequestWithPrincipal extends RequestWithCredentials {
     principal?: Principal;
 }
 
-export function demoAuth(req: RequestWithPrincipal, res: Response, next: NextFunction) {
-    if (!process.env.DEMO_BEARER_TOKEN || !process.env.DEMO_API_KEY) {
-        console.error('Missing environment variables');
-        res.status(500).json({error: 'Missing environment variables'});
-    } else if (req.credentials?.type === 'bearerToken' && req.credentials.token === process.env.DEMO_BEARER_TOKEN) {
-        console.log('Demo user authenticated');
-        req.principal = {
-            kind: 'user',
-            userId: 'demoUser',
-            superUser: false,
-            memberships: [
-                {
-                    tenantId: 1,
-                    role: 'admin',
-                    scopes: []
-                }
-            ]
+export function demoAuth(nonceStore: NonceStore) {
+    return async function demoAuth(req: RequestWithPrincipal, res: Response, next: NextFunction) {
+        // HMAC demo auth (preshared key in DEMO_HMAC_KEY)
+        if (req.credentials?.type === 'hmac') {
+            if (!process.env.DEMO_HMAC_KEY) {
+                return res.status(500).json({error: 'Missing DEMO_HMAC_KEY environment variable'});
+            }
+
+            const { signature, timestamp, algorithm, nonce } = req.credentials;
+            const nowMillis = Date.now();
+            const tsNum = Number(timestamp);
+            const allowedSkewMillis = 30000; // 5 minutes for demo
+
+            if (!Number.isFinite(tsNum)) {
+                return res.status(401).json({ error: 'Invalid timestamp' });
+            }
+            if (Math.abs(nowMillis - tsNum) > allowedSkewMillis) {
+                return res.status(401).json({ error: 'Timestamp outside allowed skew' });
+            }
+            if (!nonce || nonce.length < 8) {
+                return res.status(400).json({ error: 'Missing or invalid nonce' });
+            }
+
+            const seenAt = await nonceStore.getNonce(nonce);
+
+            if (seenAt && Math.abs(nowMillis - seenAt) <= allowedSkewMillis) {
+                return res.status(401).json({ error: 'Nonce already seen' });
+            }
+
+            await nonceStore.setNonce(nonce, nowMillis);
+
+            const algo = (algorithm || 'sha256').toLowerCase();
+            if (algo !== 'sha256') {
+                return res.status(400).json({ error: 'Unsupported HMAC algorithm (demo supports sha256 only)' });
+            }
+
+            // Compute body hash (demo: uses JSON.stringify(req.body) if present)
+            const bodyString = req.body ? JSON.stringify(req.body) : '';
+            const bodyHashHex = crypto.createHash('sha256').update(bodyString, 'utf8').digest('hex');
+
+            // Canonical string to sign: METHOD \n ORIGINAL_URL \n TIMESTAMP \n NONCE \n BODY_SHA256
+            const canonical = `${req.method}\n${req.originalUrl}\n${timestamp}\n${nonce}\n${bodyHashHex}`;
+
+            const expected = crypto
+                .createHmac('sha256', process.env.DEMO_HMAC_KEY)
+                .update(canonical, 'utf8')
+                .digest();
+
+            let provided: Buffer;
+            try {
+                // Expect Base64 in x-signature for this demo
+                provided = Buffer.from(signature, 'base64');
+            } catch {
+                return res.status(400).json({ error: 'Invalid signature encoding (expected Base64)' });
+            }
+
+            if (provided.length !== expected.length || !crypto.timingSafeEqual(provided, expected)) {
+                return res.status(401).json({ error: 'Invalid HMAC signature' });
+            }
+
+            req.principal = {
+                kind: 'service',
+                name: 'demoHmac',
+                superKey: false,
+                memberships: [
+                    {
+                        tenantId: 1,
+                        scopes: ['appointments:getAvailable', 'appointments:make', 'appointments:cancel']
+                    }
+                ]
+            }
+            return next();
         }
-        next();
-    } else if (req.credentials?.type === 'apiKey' && req.credentials.apiKey === process.env.DEMO_API_KEY) {
-        console.log('Demo service authenticated');
-        req.principal = {
-            kind: 'service',
-            name: 'demoKey',
-            superKey: false,
-            memberships: [
-                {
-                    tenantId: 1,
-                    scopes: ['appointments:getAvailable', 'appointments:make']
+
+        // Bearer token demo auth
+        if (req.credentials?.type === 'bearerToken') {
+            if (!process.env.DEMO_BEARER_TOKEN) {
+                return res.status(500).json({error: 'Missing DEMO_BEARER_TOKEN environment variable'});
+            }
+            if (req.credentials.token === process.env.DEMO_BEARER_TOKEN) {
+                req.principal = {
+                    kind: 'user',
+                    userId: 'demoUser',
+                    superUser: false,
+                    memberships: [
+                        {
+                            tenantId: 1,
+                            role: 'admin',
+                            scopes: []
+                        }
+                    ]
                 }
-            ]
+                return next();
+            }
         }
-        next();
-    } else {
-        console.log('Public user authenticated');
+
+        // API key demo auth
+        if (req.credentials?.type === 'apiKey') {
+            if (!process.env.DEMO_API_KEY) {
+                return res.status(500).json({error: 'Missing DEMO_API_KEY environment variable'});
+            }
+            if (req.credentials.apiKey === process.env.DEMO_API_KEY) {
+                req.principal = {
+                    kind: 'service',
+                    name: 'demoKey',
+                    superKey: false,
+                    memberships: [
+                        {
+                            tenantId: 1,
+                            scopes: ['appointments:getAvailable', 'appointments:make', 'appointments:cancel']
+                        }
+                    ]
+                }
+                return next();
+            }
+        }
+
         req.principal = {
             kind: 'public'
         }

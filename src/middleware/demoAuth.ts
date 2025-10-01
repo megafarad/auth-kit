@@ -8,6 +8,8 @@ import {v5 as uuidv5} from 'uuid';
 
 dotenv.config();
 
+const allScopes = ['call:dial', 'appointments:getAvailable', 'appointments:make', 'appointments:cancel']
+
 export interface RequestWithPrincipal extends RequestWithCredentials {
     principal?: Principal;
 }
@@ -88,7 +90,7 @@ export function demoAuth(nonceStore: NonceStore) {
                 memberships: [
                     {
                         tenantId: 1,
-                        scopes: ['appointments:getAvailable', 'appointments:make', 'appointments:cancel']
+                        scopes: allScopes
                     }
                 ]
             }
@@ -135,7 +137,7 @@ export function demoAuth(nonceStore: NonceStore) {
                     memberships: [
                         {
                             tenantId: 1,
-                            scopes: ['appointments:getAvailable', 'appointments:make', 'appointments:cancel']
+                            scopes: allScopes
                         }
                     ]
                 }

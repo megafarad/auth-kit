@@ -15,6 +15,9 @@ export interface RequestWithPrincipal extends RequestWithCredentials {
     principal?: Principal;
 }
 
+const verifyUserJWT = process.env.JWKS_URL ?
+    makeVerifyUserJwt({jwksUrl: process.env.JWKS_URL}) : undefined;
+
 export function demoAuth(nonceStore: NonceStore) {
     return async function demoAuth(req: RequestWithPrincipal, res: Response, next: NextFunction): Promise<void> {
         // HMAC demo auth (preshared key in DEMO_HMAC_KEY)
@@ -122,15 +125,13 @@ export function demoAuth(nonceStore: NonceStore) {
                 return;
             }
 
-            if (!process.env.JWKS_URL) {
-                res.status(500).json({error: 'Missing JWKS_URL environment variable'});
-                return;
-            }
-
-            const verifyUserJWT = makeVerifyUserJwt({jwksUrl: process.env.JWKS_URL});
-
             try {
-                const decoded = await verifyUserJWT(req.credentials.token);
+                const decoded = await verifyUserJWT?.(req.credentials.token);
+                if (!decoded) {
+                    res.status(500).json({error: 'Missing JWKS_URL environment variable'});
+                    return;
+                }
+
                 req.principal = {
                     kind: 'user',
                     userId: decoded.sub,

@@ -11,6 +11,10 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/megafarad/auth-kit.git"
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest"

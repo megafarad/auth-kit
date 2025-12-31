@@ -4,6 +4,10 @@ on:
     branches:
       - master
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -15,6 +19,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
+      - name: Update NPM
+        run: npm i -g npm@latest
 
       - name: Generate package-lock.json
         run: npm i
@@ -28,12 +35,10 @@ jobs:
           DEMO_API_KEY: ${{ secrets.DEMO_API_KEY }}
           DEMO_BEARER_TOKEN: ${{ secrets.DEMO_BEARER_TOKEN }}
           DEMO_HMAC_KEY: ${{ secrets.DEMO_HMAC_KEY }}
+          JWKS_URL: https://prekhcwlpxisbamafpgz.supabase.co/auth/v1/.well-known/jwks.json
 
       - name: Build
         run: npm run build
 
       - name: Publish to NPM
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          access: "public"
+        run: npm publish

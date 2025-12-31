@@ -142,6 +142,8 @@ export function demoAuth(nonceStore: NonceStore) {
                         scopes: []
                     }]
                 }
+                next();
+                return;
             } catch (e) {
                 res.status(401).json({error: 'Invalid JWT'});
                 return;

@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'editor' | 'viewer';
+export type Role = 'admin' | 'editor' | 'viewer' | 'evaluator';
 
 export interface ServiceMembership {
     tenantId: number;

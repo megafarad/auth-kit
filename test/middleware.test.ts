@@ -34,10 +34,10 @@ describe('middleware', () => {
             .expect({error: 'Unauthorized'});
     });
 
-    it('should return 403/Forbidden when credentials are provided but not authorized', async () => {
+    it('should return 401/Unauthorized when credentials are provided but are not valid', async () => {
         const app = buildApp([]);
         await request(app).get('/api/tenant/1/secured').set('Authorization',
-            'Bearer invalidToken').expect(403).expect({error: 'Forbidden'});
+            'Bearer invalidToken').expect(401).expect({error: 'Invalid JWT'});
     });
 
     it('should return 200/Okay when credentials are provided and authorized', async () => {

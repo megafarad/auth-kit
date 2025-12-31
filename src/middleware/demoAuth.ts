@@ -5,6 +5,7 @@ import {Principal} from "../core/auth";
 import crypto from 'crypto';
 import {NonceStore} from "../hmac/nonceStore";
 import {v5 as uuidv5} from 'uuid';
+import {makeVerifyUserJwt} from "../jwt/verifyUserJwt";
 
 dotenv.config();
 
@@ -100,8 +101,8 @@ export function demoAuth(nonceStore: NonceStore) {
 
         // Bearer token demo auth
         if (req.credentials?.type === 'bearerToken') {
-            if (!process.env.DEMO_BEARER_TOKEN) {
-                res.status(500).json({error: 'Missing DEMO_BEARER_TOKEN environment variable'});
+            if (!process.env.DEMO_BEARER_TOKEN && !process.env.JWKS_URL) {
+                res.status(500).json({error: 'Missing DEMO_BEARER_TOKEN & JWKS_URL environment variable'});
                 return;
             }
             if (req.credentials.token === process.env.DEMO_BEARER_TOKEN) {
@@ -118,6 +119,30 @@ export function demoAuth(nonceStore: NonceStore) {
                     ]
                 }
                 next();
+                return;
+            }
+
+            if (!process.env.JWKS_URL) {
+                res.status(500).json({error: 'Missing JWKS_URL environment variable'});
+                return;
+            }
+
+            const verifyUserJWT = makeVerifyUserJwt({jwksUrl: process.env.JWKS_URL});
+
+            try {
+                const decoded = await verifyUserJWT(req.credentials.token);
+                req.principal = {
+                    kind: 'user',
+                    userId: decoded.sub,
+                    superUser: false,
+                    memberships: [{
+                        tenantId: 1,
+                        role: 'evaluator',
+                        scopes: []
+                    }]
+                }
+            } catch (e) {
+                res.status(401).json({error: 'Invalid JWT'});
                 return;
             }
         }
